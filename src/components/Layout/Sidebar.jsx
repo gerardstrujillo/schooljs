@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.jsx'
 import { BarChart3, Users, ClipboardList, GraduationCap, List, BookOpen, Calendar, AlertTriangle, AlertOctagon, Bot, LogOut } from 'lucide-react'
+import logo from '../../assets/logo.jpg'
 
 export default function Sidebar() {
   const location = useLocation()
@@ -41,9 +42,12 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-gray-900 text-white h-screen fixed left-0 top-0 overflow-y-auto">
-      <div className="p-6">
-        <h2 className="text-xl font-bold">SIRA</h2>
-        <p className="text-xs text-gray-400">Sistema Inteligente</p>
+      <div className="p-6 flex flex-col items-center gap-3">
+        <img src={logo} alt="I.E.P. Los Ingenieros" className="h-12 w-12 rounded-lg object-cover" />
+        <div className="text-center">
+          <h2 className="text-lg font-bold">I.E.P. Los Ingenieros</h2>
+          <p className="text-xs text-gray-400">Gestión Académica</p>
+        </div>
       </div>
 
       <nav className="px-4 py-6 space-y-2">

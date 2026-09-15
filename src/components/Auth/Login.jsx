@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth.jsx'
+import logo from '../../assets/logo.jpg'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [isSignup, setIsSignup] = useState(false)
-  const [nombre, setNombre] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { login, signup } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -18,12 +17,7 @@ export default function Login() {
     setLoading(true)
 
     try {
-      let result
-      if (isSignup) {
-        result = await signup(email, password, nombre)
-      } else {
-        result = await login(email, password)
-      }
+      const result = await login(email, password)
 
       if (result.error) {
         setError(result.error.message)
@@ -41,28 +35,15 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-lg shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">SIRA</h1>
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="I.E.P. Los Ingenieros" className="h-20 w-20 rounded-lg object-cover" />
+          </div>
+          <h1 className="text-3xl font-bold text-center text-gray-900 mb-2">I.E.P. Los Ingenieros</h1>
           <p className="text-center text-gray-600 text-sm mb-6">
-            Sistema Inteligente de Riesgo Académico
+            Sistema de Gestión Académica
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {isSignup && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre
-                </label>
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Tu nombre"
-                  required
-                />
-              </div>
-            )}
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Correo electrónico
@@ -102,29 +83,13 @@ export default function Login() {
               disabled={loading}
               className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
             >
-              {loading ? 'Procesando...' : isSignup ? 'Crear cuenta' : 'Iniciar sesión'}
+              {loading ? 'Procesando...' : 'Iniciar sesión'}
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600 text-sm">
-              {isSignup ? '¿Ya tienes cuenta?' : '¿No tienes cuenta?'}
-              <button
-                onClick={() => {
-                  setIsSignup(!isSignup)
-                  setError('')
-                }}
-                className="text-blue-600 hover:text-blue-700 font-medium ml-2"
-              >
-                {isSignup ? 'Inicia sesión' : 'Regístrate'}
-              </button>
-            </p>
-          </div>
-
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-gray-700">
-            <p className="font-medium mb-2">Credenciales de prueba:</p>
-            <p>Email: <code className="bg-white px-2 py-1 rounded">demo@test.com</code></p>
-            <p>Password: <code className="bg-white px-2 py-1 rounded">demo123456</code></p>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center text-sm text-gray-700">
+            <p>¿Problemas para acceder?</p>
+            <p className="text-xs text-gray-600 mt-1">Contacta con el administrador del sistema</p>
           </div>
         </div>
       </div>
