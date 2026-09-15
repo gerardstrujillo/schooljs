@@ -5,51 +5,67 @@ const allowedMethods = ['POST']
 const maxQuestionLength = 500
 
 const schemaContext = `
-INSTRUCCIONES PARA EL ASISTENTE ACADÉMICO:
+INSTRUCCIONES PARA EL ASISTENTE ACADÉMICO - VERSIÓN MEJORADA:
 
 1. IDENTIDAD Y TONO:
    - Eres el asistente académico de una institución educativa.
    - Responde en español, de forma clara, breve y profesional.
+   - Mantén contexto de la conversación anterior.
    - Sé amable pero directo.
 
-2. CÓMO RESPONDER:
+2. CONTEXTO CONVERSACIONAL:
+   - Si el usuario pregunta sobre un estudiante o curso mencionado antes, recuerda ese contexto.
+   - Usa información previa para dar respuestas más precisas y conectadas.
+   - Si preguntan "Con qué nota está desaprobado" tras preguntar por desaprobados, proporciona esas notas.
+
+3. CÓMO RESPONDER:
    - Usa ÚNICAMENTE los datos entregados. No inventes información.
-   - Si no hay datos para responder, dilo explícitamente.
-   - No hagas conclusiones que no están en los datos.
-   - Proporciona números exactos, no aproximaciones.
+   - Si no hay datos para responder, dilo explícitamente (sin "datos proporcionados").
+   - Proporciona números exactos, incluyendo notas específicas.
+   - Cuando pregunten por notas de un estudiante específico, busca variaciones del nombre.
 
-3. PREGUNTAS COMUNES Y CÓMO RESPONDER:
+4. PREGUNTAS COMUNES Y RESPUESTAS ESPERADAS:
 
-   a) "¿Cuántos estudiantes hay?" → Usa resumen.total_estudiantes
+   a) "¿Quién está desaprobado en [CURSO]?"
+      → Lista: "Nombre Apellidos (nota: X.X) en [Curso]"
+      → Incluye la nota específica
    
-   b) "¿Cuántos estudiantes desaprobados?" → Usa resumen.estudiantes_desaprobados
-      - Esto cuenta estudiantes ÚNICOS, no notas.
+   b) "¿Con qué nota están desaprobados?"
+      → Lista cada estudiante con su nota: "Nombre: X.X, Nombre: Y.Y"
    
-   c) "¿Cuáles son los nombres de los desaprobados?" → Lista los nombres de estudiantes_desaprobados con formato: "Nombre Apellidos (Código)"
+   c) "[Estudiante] qué notas tiene?"
+      → Busca por nombre similar (tolerancia a errores)
+      → Lista todas sus notas por curso con el período
+      → Incluye su promedio
    
-   d) "¿Cuál es el promedio general?" → Usa resumen.promedio_general
+   d) "¿Cuántos estudiantes desaprobados?"
+      → Número + contexto: "X estudiantes tienen al menos una nota <11"
    
-   e) "¿Cuál es el promedio por curso?" → Usa promedio_por_curso (es un diccionario curso→promedio)
+   e) "¿Promedio por curso?" → Tabla o lista curso: promedio
    
-   f) "¿Cuáles estudiantes tienen riesgo?" → Busca en riesgos_relevantes y menciona nivel_riesgo de cada uno
-   
-   g) "¿Hay puntos críticos?" → Cuenta de resumen.puntos_criticos_pendientes
+   f) "¿Riesgo académico?" → Divide en riesgo alto y medio con estudiantes
 
-4. DIFERENCIAS CLAVE:
-   - notas_desaprobadas = lista de registros de NOTAS (puede haber múltiples del mismo estudiante)
-   - estudiantes_desaprobados = estudiantes ÚNICOS con al menos una nota desaprobada
-   - Siempre usa estudiantes_desaprobados para contar "cuántos estudiantes"
+5. MANEJO DE CURSOS:
+   - Reconoce nombres comunes: "mate" = Matemática, "calculo" = Cálculo, etc.
+   - Busca por coincidencia parcial en nombre del curso.
+   - Si no encuentra el curso exacto, sugiere opciones disponibles.
 
-5. FORMATO DE RESPUESTA:
-   - Sé conciso. Máximo 2-3 oraciones por respuesta.
-   - Si es una lista, usa viñetas o numeración.
-   - Incluye nombres y apellidos de estudiantes cuando sea relevante.
+6. BÚSQUEDA DE ESTUDIANTES:
+   - Permite variaciones: "juan" = "Juan", "perez" = "Pérez"
+   - Busca por código o nombre parcial si no encuentra exacto.
+   - Si hay múltiples coincidencias, lista todas.
 
-6. NO HAGAS:
-   - No inventes datos ni predicciones.
-   - No reveles información técnica o tokens.
-   - No hagas suposiciones sobre estudiantes sin datos.
-   - No accedas a información que no está en los datos entregados.
+7. FORMATO DE RESPUESTA:
+   - Sé conciso pero completo (1-4 oraciones máximo).
+   - Lista con viñetas cuando hay múltiples items.
+   - Incluye siempre: nombre, apellido, nota/valor relevante, curso/contexto.
+   - Si el dato es 0 o no existe, sé explícito: "No hay estudiantes..." en lugar de "Los datos no..."
+
+8. NUNCA HAGAS:
+   - No inventes notas ni datos.
+   - No reveles información técnica.
+   - No hagas suposiciones sin datos.
+   - No digas "datos proporcionados indican" - da directamente la respuesta.
 `
 
 const average = (values) => {
@@ -80,19 +96,28 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
   const asksAboutRisk = terms.some((term) =>
     ['riesgo', 'critico', 'alerta', 'peligro'].includes(term)
   )
-  const asksAboutApproved = terms.some((term) =>
-    ['aprobado', 'aprob', 'exito', 'bien'].includes(term)
-  )
+  const asksAboutCourse = terms.some((term) => {
+    const courseAliases = {
+      'mate': ['matemática', 'matematica', 'calculo'],
+      'espa': ['español', 'lengua', 'literatura'],
+      'ingle': ['inglés', 'english'],
+      'cien': ['ciencia', 'fisica', 'biologia', 'quimica'],
+      'histo': ['historia', 'social'],
+      'artes': ['arte', 'musica', 'educacion']
+    }
+    return Object.values(courseAliases).flat().some(alias => term.includes(alias))
+  })
+  const askForSpecificStudent = noteRows.length > 0 && terms.length >= 2
   const includeAllStudents = asksForStudentNames && !asksAboutFailingStudents
   
   const matchesQuestion = (value) => {
-    const text = String(value || '').toLowerCase()
+    const text = String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     return terms.some((term) => text.includes(term))
   }
 
   const matchingStudents = studentRows
     .filter((student) => includeAllStudents || (!asksAboutFailingStudents && matchesQuestion(
-      `${student.nombre} ${student.apellidos} ${student.codigo_estudiante}`
+      `${student.nombre} ${student.apellidos} ${student.codigo_estudiante}`.toLowerCase()
     )))
     .slice(0, includeAllStudents ? 1000 : 30)
     .map((student) => ({
@@ -104,6 +129,7 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
       estado: student.estado
     }))
 
+  // Notas desaprobadas con detalle completo
   const notasDesaprobadas = noteRows
     .filter((note) => Number(note.nota) < 11 || note.estado === 'desaprobado')
     .map((note) => ({
@@ -118,6 +144,23 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
       periodo: note.periodos?.nombre || null,
       nota: note.nota
     }))
+    .sort((a, b) => (a.estudiante?.nombre || '').localeCompare(b.estudiante?.nombre || ''))
+
+  // Desaprobados por curso específico si se pregunta
+  const notasDesaprobadaPorCurso = asksAboutCourse ? noteRows
+    .filter((note) => Number(note.nota) < 11 && matchesQuestion(note.cursos?.nombre || ''))
+    .map((note) => ({
+      estudiante: note.estudiantes
+        ? {
+            nombre: note.estudiantes.nombre,
+            apellidos: note.estudiantes.apellidos,
+            codigo_estudiante: note.estudiantes.codigo_estudiante
+          }
+        : null,
+      curso: note.cursos?.nombre || null,
+      nota: note.nota,
+      periodo: note.periodos?.nombre || null
+    })) : []
 
   const estudiantesDesaprobados = Array.from(
     new Map(
@@ -129,6 +172,32 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
         ])
     ).values()
   )
+
+  // Búsqueda flexible de estudiante específico
+  const studentSearch = askForSpecificStudent ? studentRows
+    .map(s => ({
+      ...s,
+      searchKey: `${s.nombre} ${s.apellidos} ${s.codigo_estudiante}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    }))
+    .filter(s => {
+      const allTerms = terms.join(' ')
+      const ratio = allTerms.split('').filter(c => s.searchKey.includes(c)).length / Math.max(allTerms.length, 1)
+      return ratio > 0.5 || s.searchKey.includes(allTerms.replace(/\s/g, ''))
+    })
+    .slice(0, 5) : []
+
+  // Notas del estudiante específico si se pregunta
+  const studentNotesDetail = studentSearch.length > 0 ? studentSearch.map(student => ({
+    estudiante: student,
+    notas: noteRows
+      .filter(n => n.estudiante_id === student.id || n.estudiantes?.nombre === student.nombre)
+      .map(n => ({
+        curso: n.cursos?.nombre,
+        nota: n.nota,
+        periodo: n.periodos?.nombre,
+        estado: n.nota < 11 ? 'desaprobado' : 'aprobado'
+      }))
+  })) : []
 
   const notasAprobadas = noteRows
     .filter((note) => Number(note.nota) >= 11 && note.estado !== 'desaprobado')
@@ -203,9 +272,11 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
       Object.entries(notesByCourse).map(([course, values]) => [course, average(values)])
     ),
     notas_desaprobadas: notasDesaprobadas,
+    notas_desaprobadas_por_curso: notasDesaprobadaPorCurso,
     notas_aprobadas: notasAprobadas,
     estudiantes_desaprobados: estudiantesDesaprobados,
     estudiantes_aprobados: estudiantesAprobados,
+    estudiante_detalle: studentNotesDetail,
     riesgo_alto: riesgoAlto,
     riesgo_medio: riesgoMedio,
     estudiantes_relacionados: matchingStudents,
@@ -295,11 +366,44 @@ async function executeAssistant(event) {
   )
 
   const estudiantesDesaprobadosTexto = contextData.estudiantes_desaprobados.length > 0 
-    ? contextData.estudiantes_desaprobados.map((e) => `• ${e.nombre} ${e.apellidos} (${e.codigo_estudiante})`).join('\n')
-    : 'Ninguno'
+    ? contextData.estudiantes_desaprobados.map((e) => {
+      const notasDelEstudiante = contextData.notas_desaprobadas
+        .filter(n => n.estudiante?.codigo_estudiante === e.codigo_estudiante || 
+                     (n.estudiante?.nombre === e.nombre && n.estudiante?.apellidos === e.apellidos))
+        .map(n => `${n.curso}: ${n.nota}`)
+        .join(', ')
+      return `• ${e.nombre} ${e.apellidos} (${e.codigo_estudiante}) - Notas: ${notasDelEstudiante}`
+    }).join('\n')
+    : 'No hay estudiantes desaprobados'
+
+  const notasDesaprobPorCursoTexto = contextData.notas_desaprobadas_por_curso.length > 0
+    ? contextData.notas_desaprobadas_por_curso
+      .reduce((acc, nota) => {
+        const key = nota.curso || 'Sin curso'
+        acc[key] ||= []
+        acc[key].push(`${nota.estudiante?.nombre} ${nota.estudiante?.apellidos}: ${nota.nota}`)
+        return acc
+      }, {})
+    : {}
+
+  const desaprobPorCursoTexto = Object.entries(notasDesaprobPorCursoTexto)
+    .map(([curso, notas]) => `${curso}:\n${notas.map(n => `  • ${n}`).join('\n')}`)
+    .join('\n') || 'No hay desaprobados por curso'
 
   const riesgoAltoTexto = contextData.riesgo_alto.length > 0 
-    ? 'Riesgo Alto: ' + contextData.riesgo_alto.map((r) => r.estudiante ? `${r.estudiante.nombre} (promedio: ${r.promedio})` : '').join(', ')
+    ? contextData.riesgo_alto.map((r) => r.estudiante ? `${r.estudiante.nombre} ${r.estudiante.apellidos} (promedio: ${r.promedio})` : '').filter(Boolean).join('\n• ')
+    : 'Ninguno'
+
+  const riesgoMedioTexto = contextData.riesgo_medio.length > 0 
+    ? contextData.riesgo_medio.map((r) => r.estudiante ? `${r.estudiante.nombre} ${r.estudiante.apellidos} (promedio: ${r.promedio})` : '').filter(Boolean).join('\n• ')
+    : 'Ninguno'
+
+  const estudianteDetalleTexto = contextData.estudiante_detalle.length > 0
+    ? contextData.estudiante_detalle.map((sd) => {
+      const notasTexto = sd.notas.map(n => `${n.curso}: ${n.nota} (${n.estado})`).join(', ')
+      const promedio = (sd.notas.reduce((sum, n) => sum + Number(n.nota || 0), 0) / Math.max(sd.notas.length, 1)).toFixed(2)
+      return `${sd.estudiante.nombre} ${sd.estudiante.apellidos} (${sd.estudiante.codigo_estudiante}):\nNotas: ${notasTexto}\nPromedio: ${promedio}`
+    }).join('\n---\n')
     : ''
 
   const promediosPorCursoTexto = Object.entries(contextData.promedio_por_curso)
@@ -323,25 +427,34 @@ RESUMEN GENERAL:
 - Total de estudiantes: ${contextData.resumen.total_estudiantes}
 - Estudiantes activos: ${contextData.resumen.estudiantes_activos}
 - Promedio general: ${contextData.resumen.promedio_general}
-- Total de notas: ${contextData.resumen.total_notas}
-- Notas aprobadas: ${contextData.resumen.notas_aprobadas}
-- Notas desaprobadas: ${contextData.resumen.notas_desaprobadas}
-- Estudiantes desaprobados (únicos): ${contextData.resumen.estudiantes_desaprobados}
-- Estudiantes aprobados (únicos): ${contextData.resumen.estudiantes_aprobados}
-- Porcentaje de aprobación: ${contextData.resumen.porcentaje_aprobacion}
+- Total de notas registradas: ${contextData.resumen.total_notas}
+- Notas aprobadas (≥11): ${contextData.resumen.notas_aprobadas}
+- Notas desaprobadas (<11): ${contextData.resumen.notas_desaprobadas}
+- Estudiantes únicos desaprobados: ${contextData.resumen.estudiantes_desaprobados}
+- Estudiantes únicos aprobados: ${contextData.resumen.estudiantes_aprobados}
+- Tasa de aprobación: ${contextData.resumen.porcentaje_aprobacion}
 
-ESTUDIANTES DESAPROBADOS:
+ESTUDIANTES DESAPROBADOS (con notas):
 ${estudiantesDesaprobadosTexto}
 
-RIESGO ACADÉMICO:
-- Estudiantes en riesgo alto: ${contextData.riesgo_alto.length}
-- Estudiantes en riesgo medio: ${contextData.riesgo_medio.length}
-${riesgoAltoTexto}
+${contextData.notas_desaprobadas_por_curso.length > 0 ? `DESAPROBADOS POR CURSO:
+${desaprobPorCursoTexto}
 
-PROMEDIOS POR CURSO:
+` : ''}RIESGO ACADÉMICO:
+Riesgo Alto (${contextData.riesgo_alto.length}):
+${contextData.riesgo_alto.length > 0 ? '• ' + riesgoAltoTexto : 'Ninguno'}
+
+Riesgo Medio (${contextData.riesgo_medio.length}):
+${contextData.riesgo_medio.length > 0 ? '• ' + riesgoMedioTexto : 'Ninguno'}
+
+${estudianteDetalleTexto ? `DETALLE DE ESTUDIANTE CONSULTADO:
+${estudianteDetalleTexto}
+
+` : ''}PROMEDIOS POR CURSO:
 ${promediosPorCursoTexto}
 
-Responde la pregunta de forma clara, breve y usando SOLO los datos proporcionados.`
+INSTRUCCIÓN FINAL:
+Responde la pregunta usando SOLO los datos anteriores. Sé directo, claro y conciso. Si es una pregunta sobre estudiantes específicos, proporciona sus nombres completos y notas. No digas "los datos proporcionados indican" - da la respuesta directamente.`
       }
     ]
   })
