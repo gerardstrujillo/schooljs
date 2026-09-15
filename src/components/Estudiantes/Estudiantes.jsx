@@ -77,7 +77,7 @@ export default function Estudiantes() {
     e.preventDefault()
     setError('')
 
-    if (!formData.nombre || !formData.apellidos || !formData.codigoEstudiante || !formData.gradoId || !formData.seccionId) {
+    if (!formData.nombre || !formData.apellidos || !formData.gradoId || !formData.seccionId) {
       setError('Completa todos los campos')
       return
     }
@@ -98,7 +98,6 @@ export default function Estudiantes() {
         const { error } = await estudianteService.create(
           formData.nombre,
           formData.apellidos,
-          formData.codigoEstudiante,
           formData.gradoId,
           formData.seccionId
         )
@@ -247,16 +246,22 @@ export default function Estudiantes() {
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Código Estudiante</label>
-              <input
-                type="text"
-                value={formData.codigoEstudiante}
-                onChange={(e) => setFormData({ ...formData, codigoEstudiante: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="EST-001"
-              />
-            </div>
+            {!editingId && (
+              <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                El código del estudiante se generará automáticamente.
+              </p>
+            )}
+            {editingId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Código Estudiante</label>
+                <input
+                  type="text"
+                  value={formData.codigoEstudiante}
+                  readOnly
+                  className="w-full px-4 py-2 border border-gray-200 bg-gray-50 rounded-lg text-gray-600"
+                />
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Grado</label>

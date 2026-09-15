@@ -25,6 +25,7 @@ export default function Sidebar() {
     { path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { path: '/estudiantes', label: 'Estudiantes', icon: 'estudiantes' },
     { path: '/notas', label: 'Notas', icon: 'notas' },
+    { path: '/todas-las-notas', label: 'Todas las Notas', icon: 'notas' },
     { path: '/grados', label: 'Grados', icon: 'grados' },
     { path: '/secciones', label: 'Secciones', icon: 'secciones' },
     { path: '/cursos', label: 'Cursos', icon: 'cursos' },

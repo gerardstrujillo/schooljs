@@ -38,19 +38,39 @@ export const estudianteService = {
     return { data, error }
   },
 
-  async create(nombre, apellidos, codigoEstudiante, gradoId, seccionId) {
-    const { data, error } = await supabase
-      .from('estudiantes')
-      .insert([{
-        nombre,
-        apellidos,
-        codigo_estudiante: codigoEstudiante,
-        grado_id: gradoId,
-        seccion_id: seccionId,
-        estado: 'activo'
-      }])
-      .select()
-    return { data, error }
+  async create(nombre, apellidos, gradoId, seccionId) {
+    for (let intento = 0; intento < 5; intento += 1) {
+      const { data: estudiantes, error: consultaError } = await supabase
+        .from('estudiantes')
+        .select('codigo_estudiante')
+
+      if (consultaError) return { data: null, error: consultaError }
+
+      const siguienteNumero = (estudiantes || []).reduce((maximo, estudiante) => {
+        const coincidencia = String(estudiante.codigo_estudiante || '').match(/^EST-(\d+)$/i)
+        return coincidencia ? Math.max(maximo, Number(coincidencia[1])) : maximo
+      }, 0) + 1
+      const codigoEstudiante = `EST-${String(siguienteNumero).padStart(3, '0')}`
+
+      const { data, error } = await supabase
+        .from('estudiantes')
+        .insert([{
+          nombre,
+          apellidos,
+          codigo_estudiante: codigoEstudiante,
+          grado_id: gradoId,
+          seccion_id: seccionId,
+          estado: 'activo'
+        }])
+        .select()
+
+      if (!error || error.code !== '23505') return { data, error }
+    }
+
+    return {
+      data: null,
+      error: new Error('No se pudo generar un código único. Intenta nuevamente.')
+    }
   },
 
   async update(id, nombre, apellidos, codigoEstudiante, gradoId, seccionId, estado) {

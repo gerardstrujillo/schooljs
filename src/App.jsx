@@ -10,6 +10,7 @@ import Periodos from './components/Periodos/Periodos'
 import Estudiantes from './components/Estudiantes/Estudiantes'
 import RegistroNotas from './components/Notas/RegistroNotas'
 import ConsultaNotas from './components/Notas/ConsultaNotas'
+import TodasLasNotas from './components/Notas/TodasLasNotas'
 import RiesgoAcademico from './components/RiesgoAcademico/RiesgoAcademico'
 import PuntosCriticos from './components/PuntosCriticos/PuntosCriticos'
 import AsistenteIA from './components/AsistenteIA/AsistenteIA'
@@ -89,6 +90,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ConsultaNotas />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/todas-las-notas"
+            element={
+              <ProtectedRoute>
+                <TodasLasNotas />
               </ProtectedRoute>
             }
           />

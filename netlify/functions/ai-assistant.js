@@ -31,14 +31,27 @@ const compactData = ({ estudiantes, notas, cursos, periodos, riesgos, puntosCrit
   const riskRows = riesgos.data || []
   const criticalRows = puntosCriticos.data || []
   const terms = questionTerms(question)
+  const asksForStudentNames = terms.some((term) =>
+    ['nombre', 'nombres', 'quien', 'quienes'].includes(term)
+  )
   const matchesQuestion = (value) => {
     const text = String(value || '').toLowerCase()
     return terms.some((term) => text.includes(term))
   }
 
   const matchingStudents = studentRows
-    .filter((student) => matchesQuestion(`${student.nombre} ${student.apellidos} ${student.codigo_estudiante}`))
-    .slice(0, 30)
+    .filter((student) => asksForStudentNames || matchesQuestion(
+      `${student.nombre} ${student.apellidos} ${student.codigo_estudiante}`
+    ))
+    .slice(0, asksForStudentNames ? 1000 : 30)
+    .map((student) => ({
+      nombre: student.nombre,
+      apellidos: student.apellidos,
+      codigo_estudiante: student.codigo_estudiante,
+      grado: student.grados?.nombre || null,
+      seccion: student.secciones?.nombre || null,
+      estado: student.estado
+    }))
 
   const notesByCourse = {}
   noteRows.forEach((note) => {
