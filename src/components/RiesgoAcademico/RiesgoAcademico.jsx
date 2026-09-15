@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
 import { periodoService } from '../../services/periodoService'
 import { riesgoService } from '../../services/riesgoService'
 import { notasService } from '../../services/notasService'
@@ -125,15 +126,15 @@ export default function RiesgoAcademico() {
   const getRiesgoIcon = (nivel) => {
     switch (nivel) {
       case 'bajo':
-        return '✓'
+        return <CheckCircle className="w-5 h-5 text-green-600" />
       case 'medio':
-        return '⚠'
+        return <AlertTriangle className="w-5 h-5 text-yellow-600" />
       case 'alto':
-        return '⚠'
+        return <AlertTriangle className="w-5 h-5 text-orange-600" />
       case 'crítico':
-        return '✗'
+        return <XCircle className="w-5 h-5 text-red-600" />
       default:
-        return '–'
+        return <span className="text-gray-400">–</span>
     }
   }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { User, BookOpen, GraduationCap, AlertTriangle, CheckCircle } from 'lucide-react'
 import { criticalPointsService } from '../../services/criticalPointsService'
 import { periodoService } from '../../services/periodoService'
 
@@ -49,7 +50,9 @@ export default function PuntosCriticos() {
 
   const handleMarcarResuelto = async (punto) => {
     try {
-      const { data, error } = await criticalPointsService.guardarPuntosCriticos([punto])
+      const { data, error } = punto.id
+        ? await criticalPointsService.marcarResuelto(punto.id)
+        : await criticalPointsService.guardarPuntosCriticos([punto], true)
       if (error) throw error
       await cargarPuntosCriticos(periodoSeleccionado)
     } catch (err) {
@@ -93,13 +96,13 @@ export default function PuntosCriticos() {
   const getTipoIcon = (tipo) => {
     switch (tipo) {
       case 'estudiante_riesgo':
-        return '👤'
+        return <User className="w-5 h-5 text-blue-600" />
       case 'curso_bajo_rendimiento':
-        return '📚'
+        return <BookOpen className="w-5 h-5 text-purple-600" />
       case 'grado_bajo_rendimiento':
-        return '🎓'
+        return <GraduationCap className="w-5 h-5 text-indigo-600" />
       default:
-        return '⚠'
+        return <AlertTriangle className="w-5 h-5 text-orange-600" />
     }
   }
 
@@ -224,13 +227,15 @@ export default function PuntosCriticos() {
                       Severidad: {punto.severidad.charAt(0).toUpperCase() + punto.severidad.slice(1)}
                     </span>
                     {punto.estudiante_id && (
-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
-                        👤 Estudiante
+                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                        <User className="w-3 h-3" />
+                        Estudiante
                       </span>
                     )}
                     {punto.curso_id && (
-                      <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
-                        📚 Curso
+                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
+                        <BookOpen className="w-3 h-3" />
+                        Curso
                       </span>
                     )}
                   </div>
@@ -250,7 +255,10 @@ export default function PuntosCriticos() {
         </div>
       ) : (
         <div className="text-center py-12 text-gray-500 bg-white border border-gray-200 rounded-lg">
-          <p className="text-lg">✓ No se detectaron puntos críticos</p>
+          <p className="flex items-center justify-center gap-2 text-lg">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            No se detectaron puntos críticos
+          </p>
           <p className="text-sm mt-2">El desempeño académico se ve bien en este período</p>
         </div>
       )}

@@ -1,6 +1,14 @@
 import { supabase } from './supabaseClient'
 
 export const riesgoService = {
+  async getAll() {
+    const { data, error } = await supabase
+      .from('evaluaciones_riesgo')
+      .select('estudiante_id, periodo_id, nivel_riesgo, promedio_general, fecha_evaluacion')
+      .order('fecha_evaluacion', { ascending: false })
+    return { data, error }
+  },
+
   // Calcula el nivel de riesgo basado en notas
   calcularNivelRiesgo(notas) {
     if (!notas || notas.length === 0) return 'sin_datos'

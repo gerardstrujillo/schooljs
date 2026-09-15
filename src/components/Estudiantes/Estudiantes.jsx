@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle } from 'lucide-react'
 import { estudianteService } from '../../services/estudianteService'
 import { gradoService } from '../../services/gradoService'
 import { seccionService } from '../../services/seccionService'
@@ -389,12 +390,13 @@ export default function Estudiantes() {
                   <td className="py-4 px-6 text-gray-700">{getNombreGrado(est.grado_id)}</td>
                   <td className="py-4 px-6 text-gray-700">{getNombreSeccion(est.seccion_id)}</td>
                   <td className="py-4 px-6">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
                       est.estado === 'activo'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {est.estado === 'activo' ? '✓ Activo' : 'Inactivo'}
+                      {est.estado === 'activo' && <CheckCircle className="w-4 h-4" />}
+                      {est.estado === 'activo' ? 'Activo' : 'Inactivo'}
                     </span>
                   </td>
                   <td className="py-4 px-6 text-center space-x-2">

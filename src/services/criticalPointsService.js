@@ -57,7 +57,7 @@ export const criticalPointsService = {
     return puntosCriticos
   },
 
-  async guardarPuntosCriticos(puntosCriticos) {
+  async guardarPuntosCriticos(puntosCriticos, resuelta = false) {
     if (puntosCriticos.length === 0) return { data: [], error: null }
 
     const { data, error } = await supabase
@@ -70,7 +70,7 @@ export const criticalPointsService = {
         grado_id: p.grado_id || null,
         severidad: p.severidad,
         fecha_deteccion: new Date().toISOString(),
-        resuelta: false
+        resuelta
       })))
       .select()
 

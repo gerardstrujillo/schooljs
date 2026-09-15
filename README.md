@@ -78,6 +78,46 @@ src/
 └── App.jsx            # Enrutador principal
 ```
 
+## ✅ Cumplimiento de indicadores
+
+### 1. Detección temprana
+
+**Cumple.** El sistema identifica estudiantes que pueden necesitar intervención antes de que termine el período:
+
+- [Riesgo Académico](./src/components/RiesgoAcademico/RiesgoAcademico.jsx): calcula el nivel `bajo`, `medio`, `alto` o `crítico` por estudiante y período usando el promedio, las notas desaprobadas y las notas bajas.
+- [Puntos Críticos](./src/components/PuntosCriticos/PuntosCriticos.jsx): detecta promedios inferiores a la nota aprobatoria y cursos con más de 30 % de desaprobados.
+- [Dashboard](./src/components/Dashboard/Dashboard.jsx): resume la distribución del riesgo y prioriza estudiantes de riesgo alto/crítico.
+- [Asistente IA](./src/components/AsistenteIA/AsistenteIA.jsx): permite consultar estudiantes con riesgo alto, crítico o bajo rendimiento.
+
+### 2. Monitoreo del rendimiento académico
+
+**Cumple.** El rendimiento puede observarse por estudiante, curso y período:
+
+- [Registro de Notas](./src/components/Notas/RegistroNotas.jsx): registra y actualiza notas por estudiante, curso y período.
+- [Consulta de Notas](./src/components/Notas/ConsultaNotas.jsx): filtra notas y muestra promedio general y promedio por curso.
+- [Dashboard](./src/components/Dashboard/Dashboard.jsx): presenta gráficos de aprobados/desaprobados, promedio por curso, evolución del promedio y distribución de riesgo.
+- [Períodos](./src/components/Periodos/Periodos.jsx): organiza la información académica por período.
+- [Servicios de datos](./src/services/notasService.js): consulta las notas relacionadas con estudiantes, cursos y períodos desde Supabase.
+
+### 3. Toma de decisiones oportuna
+
+**Cumple después de la implementación del centro de decisiones.** El sistema transforma los indicadores en acciones concretas:
+
+- [Centro de decisiones del Dashboard](./src/components/Dashboard/Dashboard.jsx): muestra acciones de atención inmediata, prevención e intervención académica.
+- [Puntos Críticos](./src/components/PuntosCriticos/PuntosCriticos.jsx): permite filtrar alertas por tipo y severidad y marcarlas como resueltas.
+- [Riesgo Académico](./src/components/RiesgoAcademico/RiesgoAcademico.jsx): permite localizar rápidamente a los estudiantes que requieren seguimiento.
+- [Registro de Notas](./src/components/Notas/RegistroNotas.jsx): permite registrar la intervención o actualización académica mediante nuevas calificaciones.
+
+> Las recomendaciones son apoyo para la gestión académica; no sustituyen la evaluación profesional del docente o tutor.
+
+### Flujo recomendado de uso
+
+1. Registrar las calificaciones en [Registro de Notas](./src/components/Notas/RegistroNotas.jsx).
+2. Revisar la distribución y evolución en [Dashboard](./src/components/Dashboard/Dashboard.jsx).
+3. Abrir [Riesgo Académico](./src/components/RiesgoAcademico/RiesgoAcademico.jsx) para priorizar estudiantes.
+4. Revisar y resolver alertas en [Puntos Críticos](./src/components/PuntosCriticos/PuntosCriticos.jsx).
+5. Consultar el detalle en [Consulta de Notas](./src/components/Notas/ConsultaNotas.jsx) y registrar el seguimiento correspondiente.
+
 ## 🗄️ Tablas en Supabase
 
 El sistema requiere las siguientes tablas en tu base de datos PostgreSQL:

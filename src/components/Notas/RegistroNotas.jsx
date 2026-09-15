@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { CheckCircle, XCircle } from 'lucide-react'
 import { notasService } from '../../services/notasService'
 import { gradoService } from '../../services/gradoService'
 import { seccionService } from '../../services/seccionService'
@@ -340,12 +341,22 @@ export default function RegistroNotas() {
                   <td className="py-4 px-6 text-gray-900">{getNombreEstudiante(nota.estudiante_id)}</td>
                   <td className="py-4 px-6 text-center font-bold text-gray-900">{nota.nota}</td>
                   <td className="py-4 px-6">
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
                       nota.estado === 'aprobado'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {nota.estado === 'aprobado' ? '✓ Aprobado' : '✗ Desaprobado'}
+                      {nota.estado === 'aprobado' ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Aprobado
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4" />
+                          Desaprobado
+                        </>
+                      )}
                     </span>
                   </td>
                   <td className="py-4 px-6 text-center space-x-2">
